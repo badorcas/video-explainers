@@ -18,8 +18,16 @@ KERN = 8
 def T(s, size=26, color=INK, **kw):
     """Always make text with T(), never Text(). Pango snaps glyph advances to whole pixels
     at the small sizes manim lays text out at, which wrecks kerning ("Ar ray", "Workfl ow").
-    Laying out at 8x and scaling down gives correct spacing."""
-    return Text(s, font=FONT, font_size=size*KERN, color=color, **kw).scale(1/KERN)
+    Laying out at 8x and scaling down gives correct spacing.
+    Pango wraps at the render's pixel width (854 px at -ql), and at 8x that wrapped long lines
+    at low quality only; widen the layout box while the text is built. Split lines yourself."""
+    pw, ph = config.pixel_width, config.pixel_height
+    config.pixel_width, config.pixel_height = 64000, 36000
+    try:
+        t = Text(s, font=FONT, font_size=size*KERN, color=color, **kw)
+    finally:
+        config.pixel_width, config.pixel_height = pw, ph
+    return t.scale(1/KERN)
 
 def M(s, size=34, color=INK):
     return MathTex(s, font_size=size, color=color)
