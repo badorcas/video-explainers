@@ -77,14 +77,22 @@ Known pitfalls either way:
 `python3 scripts/transcribe.py <audio> <outdir>` (about 4 min per 13 min of audio). Read the whole transcript. Whisper mishears proper nouns (it heard "Dremel Club" for "Journal Club"), so cross-check names against later mentions, and leave uncertain names off screen.
 
 ### 3. Storyboard
-Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text. Then mark the 1 to 3 beats that get a signature device, and plan everything else in the house style.
+Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text. Then mark the 1 to 3 beats that get a signature device, and plan everything else in the house style. Finally mark the **3 to 6 key beats**: the frames that carry the hardest ideas (the hook, the hardest concept, the payoff, and every signature device). These get designed in step 4 before anything is animated.
 
-**Gate 1: independent expert review of the storyboard.** Before writing any scene code, have the storyboard checked by a reviewer who did not write it (see "Independent expert review" below). Do not start step 4 until it passes.
+### 4. Key visuals (style frames)
+Design the key beats as still frames before writing any animation. A bad picture caught as a still costs seconds; caught after animation it costs a rewrite.
 
-### 4. Write scenes
+- **Designer: a Fable subagent by default.** Spawn it with the Agent/Task tool and `model: "fable"`. If that model or a subagent tool isn't available, do the design pass yourself, but still produce the options and stills below. Brief it with `references/key-visual-brief.md`.
+- **Output:** for each key beat, 2 or 3 genuinely different approaches (different representation or view, not color tweaks), each as a manim scene file and a still rendered with `QA=1 manim -s -ql --disable_caching file.py <Scene>` (layout QA clean), plus a one-line rationale. Save them under `keyframes/<beat>/<option>.png` with the code beside them.
+- **Pick:** look at the stills yourself first and drop any that break a hard rule. Then run Gate 1.
+- **Then:** the approved stills are the visual reference for the whole video. Copy them to `keyframes/approved/`. The animated scene for a key beat must land on its approved still, and every other scene must look like it came from the same artist (same palette, stroke weight, label style, level of detail).
+
+**Gate 1: independent expert review of the storyboard and key visuals.** Before writing any scene code, send the storyboard and every key-visual option to a reviewer who did not make them (see "Independent expert review" below). The reviewer marks each option PASS/FAIL and recommends one per beat. If the user is around, show them the recommended stills and let them pick; otherwise take the reviewer's pick. Do not start step 5 until every key beat has an approved still.
+
+### 5. Write scenes
 Copy `scripts/style.py`, `scripts/qa.py` and `scripts/lq.sh` next to the scene files (set `ICON_DIR` to `assets/icons`, or copy that folder as `icons/`). Every scene subclasses `TL`, sets `T0, T1` in absolute audio seconds, and uses `self.till(t)` (absolute time) before each beat, then `self.end()`. Spread scenes across 3 or 4 files so they can be fixed and re-rendered independently. End each scene with a fade-out about 1 s before T1.
 
-### 5. Review loop at low quality (do not skip)
+### 6. Review loop at low quality (do not skip)
 Render with `bash lq.sh <file> "S01 S02 ..."` (about 10 s per minute of video). It runs the layout QA and writes the issue count per scene to `lq_<file>.txt`; read `qa/<Scene>.txt` and clear every line. Then make contact sheets with `python3 scripts/grab.py <Scene> t1 t2 t3 t4` and view them: the QA catches geometry, not meaning. Check for:
 - clipped text at the frame edges, labels overlapping lines or each other, lines showing through a layer on top (the QA flags these; confirm by eye)
 - letter spacing that looks uneven (means something bypassed `T()`)
@@ -102,15 +110,15 @@ Fix, re-render, re-check. Do this before the slow full render.
 
 ### Independent expert review
 You are too close to your own frames: you know what each shape is supposed to be, so you can't see that it doesn't read. Every graphic gets checked by a fresh reviewer before it ships.
-- **Who:** a subagent with fresh context (Agent/Task tool) when one is available. It must not see your reasoning, only the inputs below. If no subagent tool exists, ask the user to review the contact sheets before the final render; never skip the gate on your own judgment.
+- **Who:** a subagent with fresh context (Agent/Task tool) when one is available. It must not see your reasoning, only the inputs below. Use a different model from the one that made the graphics, so it doesn't share the designer's blind spots: with the default Fable designer, run the reviewer with `model: "opus"`. If no subagent tool exists, ask the user to review the contact sheets before the final render; never skip the gate on your own judgment.
 - **Persona:** a subject-matter expert in the video's field (e.g. neuroanatomist for the visual pathway, RF engineer for radar) who is also a demanding explainer-video editor. Use one reviewer per gate; for a mixed topic, give it both expertises.
-- **Inputs:** the transcript excerpt for each scene, the storyboard (Gate 1) or contact sheets (Gate 2), any reference images or source figures used, and the "Visual principles" and "Hard rules from review" sections of this file. At Gate 2, clear `qa/<Scene>.txt` first; the reviewer is for what automated QA can't see. Do not include your own assessment.
+- **Inputs:** the transcript excerpt for each scene, the storyboard and key-visual stills (Gate 1) or contact sheets plus the approved key-visual stills (Gate 2), any reference images or source figures used, and the "Visual principles" and "Hard rules from review" sections of this file. At Gate 2, clear `qa/<Scene>.txt` first; the reviewer is for what automated QA can't see. Do not include your own assessment.
 - **What it checks:** factual and anatomical/technical accuracy (correct structures, order, positions, proportions, notation); whether each frame reads with the sound off; that named structures are labeled with standard terms; drawing quality (anything wobbly, amateurish or distracting); clutter, layout and color-encoding consistency; anything that misleads.
 - **Output it must return:** per scene, PASS or FAIL, then a list of issues, each with frame time, severity (blocking / should fix / nit) and a concrete fix. Blocking = wrong facts, wrong anatomy, misleading or unreadable graphics, or a drawing bad enough to distract.
 - **Rule:** fix all blocking issues and nearly all should-fix ones. If you disagree with a finding, say why in the final report instead of silently ignoring it. Re-review a scene after any non-trivial fix.
 - **Prompt template:** `references/expert-review.md`.
 
-### 6. Final render and assembly
+### 7. Final render and assembly
 - `setsid nohup bash scripts/render_all.sh "part1:S01 part1:S02 ..." ...&` takes about 1 min of render time per minute of video at 1080p30. Poll `progress.txt` and `fails.txt`.
 - `python3 scripts/assemble.py <audio> /mnt/user-data/outputs/<name>.mp4 part1:S01 ...` pads or trims each segment to its exact slot (so small timing drift never desyncs the audio), concatenates, and muxes the narration. It's resumable after a timeout.
 - Spot-check about 10 frames across the final file against the transcript times, then call `present_files`.

@@ -14,7 +14,7 @@ Audience: [AUDIENCE, e.g. third-year medical students studying for Step 2 CK].
 
 Inputs:
 - Rules the video must follow: [path to SKILL.md, "Visual principles" and "Hard rules from review" sections]
-- For each scene: its narration excerpt with timestamps, and [Gate 1: the storyboard beat list] / [Gate 2: contact sheet images at the listed times]
+- For each scene: its narration excerpt with timestamps, and [Gate 1: the storyboard beat list, plus 2-3 still options for each key beat] / [Gate 2: contact sheet images at the listed times, plus the approved key-visual stills they must match]
 - Reference images or source figures used: [paths, or "none"]
 
 For every scene, check:
@@ -29,4 +29,6 @@ Return, for each scene:
 <Scene name>: PASS | FAIL
 - [t=..s] [blocking | should fix | nit] <problem> -> <concrete fix>
 ```
+At Gate 1, also rank the options for each key beat and name the one you recommend, with one line on why. At Gate 2, flag any scene that drifts from the approved key visuals.
+
 Blocking means wrong facts or anatomy, a misleading or unreadable graphic, or a drawing bad enough to distract. A scene with any blocking issue is FAIL. End with the single most important change across the whole video.
