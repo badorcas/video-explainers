@@ -262,3 +262,54 @@ def flush(scene, log):
     os.makedirs("qa", exist_ok=True)
     with open(os.path.join("qa", f"{type(scene).__name__}.txt"), "w") as f:
         f.write("\n".join(log["lines"]) + ("\n" if log["lines"] else ""))
+
+
+# ---------- timeline for lint.py: which labels are on screen when ----------
+
+def _texts_all(m, out):
+    if isinstance(m, TEXT_TYPES):
+        out.append(m)
+        return
+    for s in m.submobjects:
+        _texts_all(s, out)
+
+
+try:
+    from style import BG as BG_HEX      # opaque plates behind labels are not graphics
+except ImportError:
+    BG_HEX = "#14161A"
+BG_HEX = BG_HEX.upper()
+
+
+def snap_timeline(scene, t, phase="post"):
+    """Record the visible labels (string, centre) and whether any non-text graphic is visible."""
+    texts, shapes = [], []
+    for m in scene.mobjects:
+        _texts_all(m, texts)
+        for s in m.get_family():
+            if not isinstance(s, TEXT_TYPES) and isinstance(s, VMobject) and len(s.points) >= 4 \
+                    and (_stroke_vis(s) or (_fill(s) > 0.08 and s.get_fill_color().to_hex().upper() != BG_HEX)):
+                shapes.append(s)
+    rows = []
+    for x in texts:
+        if _fill(x) <= 0.15 or x.width < 0.01:
+            continue
+        c = x.get_center()
+        if abs(c[0]) > FW or abs(c[1]) > FH:
+            continue
+        if isinstance(x, SingleStringMathTex):
+            rows.append(["math", x.get_tex_string(), round(c[0], 2), round(c[1], 2)])
+        else:
+            rows.append(["text", x.text, round(c[0], 2), round(c[1], 2)])
+    on_frame = [s for s in shapes if abs(s.get_center()[0]) < FW and abs(s.get_center()[1]) < FH]
+    tl = scene.__dict__.setdefault("_qa_timeline", [])
+    tl.append({"t": round(t, 2), "phase": phase, "texts": rows, "graphics": len(on_frame)})
+
+
+def flush_timeline(scene):
+    import json
+    os.makedirs("qa", exist_ok=True)
+    cls = type(scene)
+    json.dump({"T0": cls.T0, "T1": cls.T1, "lint_ok": getattr(cls, "LINT_OK", {}),
+               "snaps": scene.__dict__.get("_qa_timeline", [])},
+              open(os.path.join("qa", f"{cls.__name__}.tl.json"), "w"))

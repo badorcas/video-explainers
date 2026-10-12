@@ -17,7 +17,7 @@ Inputs:
 - For each scene: its narration excerpt with timestamps, and [Gate 1: the storyboard beat list, plus 2-3 still options for each key beat] / [Gate 2: contact sheet images at the listed times, plus the approved key-visual stills they must match]
 - Reference images or source figures used: [paths, or "none"]
 
-For every scene, check:
+At Gate 2, work through `references/review-checklist.md` for every scene and answer every item Y, N or NA with a frame time, using `lint/summary.txt` and the beat sheets `lint/<Scene>_beats.png` (one frame per animation beat, narration printed underneath). Then do its cross-scene section C once. Beyond the checklist, also check:
 - Accuracy: correct structures, order, connections, positions and proportions; correct terminology and notation; nothing drawn that the source doesn't support.
 - Labels: every structure the narration names is labeled with the standard term; no labels that just repeat obvious shapes; no sentence captions.
 - Drawing quality: would an expert wince at any outline? Anything wobbly, out of proportion or amateurish enough to distract?

@@ -6,7 +6,8 @@ A Claude skill and reproducible toolchain for turning narration audio into a syn
 - `references/creative-devices.md`: when and how to use 3D, morphs, icons, Blender renders
 - `references/key-visual-brief.md`: prompt for the key-visual (style frame) design agent
 - `references/expert-review.md`: prompt for the independent expert review gates
-- `scripts/`: style kit, layout QA, transcription, rendering, review contact sheets, assembly
+- `references/review-checklist.md`: yes/no frame-review rubric (Gate 2) that a cheaper reviewer can follow
+- `scripts/`: style kit, layout QA, timing/composition lint, transcription, rendering, review contact sheets, assembly
 - `assets/icons/`: Phosphor fill icons (MIT) for recognizable objects, loaded with `icon()`
 - `flake.nix`: pinned environment (manim, TeX, ffmpeg, faster-whisper, model weights, fonts)
 

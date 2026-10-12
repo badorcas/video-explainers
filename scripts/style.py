@@ -158,11 +158,22 @@ class TL(Scene):
         dt = t - self.now()
         if dt > 0.04:
             self.wait(dt)
+    def play(self, *args, **kwargs):
+        # QA=1: log what text is on screen before and after every animation, for lint.py
+        wait = all(isinstance(a, Wait) for a in args)       # self.wait() comes through here too
+        self._tl_snap("wait" if wait else "pre")
+        super().play(*args, **kwargs)
+        self._tl_snap("wait" if wait else "post")
     def end(self):
         self.till(self.T1)
         if os.environ.get("QA") == "1":
             import qa
             qa.flush(self, self._qalog())
+            qa.flush_timeline(self)
+    def _tl_snap(self, phase):
+        if os.environ.get("QA") == "1":
+            import qa
+            qa.snap_timeline(self, self.now(), phase)
     def _qalog(self):
         if not hasattr(self, "_qa_log"):
             self._qa_log = {"seen": set(), "lines": []}

@@ -79,6 +79,7 @@
           render     = mk "render"     "bash ${self}/scripts/render_all.sh";
           assemble   = mk "assemble"   "python ${self}/scripts/assemble.py";
           grab       = mk "grab"       "python ${self}/scripts/grab.py";
+          lint       = mk "lint"       "python ${self}/scripts/lint.py";
         });
     };
 }
