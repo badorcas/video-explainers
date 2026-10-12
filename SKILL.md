@@ -22,7 +22,19 @@ These come from direct user feedback on a finished video. The equations, the cle
 
 Style defaults are in `scripts/style.py`: near-black background, off-white ink, Caladea serif, thin strokes. If the user prefers a light Tufte "paper" look, swap BG/INK/MUTE/FAINT there; everything else follows.
 
-Raster art: there is no image generator in the claude.ai container. For richer objects (vehicles, buildings, instruments), hand-write SVG and load it with `SVGMobject`, or compose from manim primitives. Keep manim as the default for everything else.
+## Creativity, used sparingly
+
+The restrained 2D house style is the default for most of the runtime. On top of it, plan **1 to 3 signature moments per 10 minutes** where a more inventive device explains something 2D line art can't. Put them at the opening hook, the single hardest concept, and optionally the payoff.
+
+Before using a device, ask: would the explanation be weaker without it? Use it only if the answer is clearly yes. Examples of good uses:
+- a morph from a chirp graph into its spectrum (two forms of one idea),
+- an orbiting 3D view of a corner reflector bouncing a ray off three faces (the third bounce is invisible in 2D),
+- a driver's-eye 3D shot where the van fills the windshield (the occlusion explains itself),
+- small multiples comparing test conditions instead of a sequence of slides.
+
+Keep geometry with readable angles and lengths in orthographic 2D, and keep every creative shot in the same palette and stroke weight so the video looks like one artist made it. Read `references/creative-devices.md` for the device catalog (morphs, camera moves, manim 3D, Blender line-art renders, icon sets, raster-to-vector, small multiples), asset sources and licenses, and how to keep 3D shots stylistically coherent.
+
+There is no image generator in the claude.ai container. For richer objects, prefer CC0 3D models rendered as line art, an icon family imported via `SVGMobject`, or parametric primitives. Moving parts (lights, signals, beams) stay as manim overlays.
 
 ## Workflow
 
@@ -53,7 +65,7 @@ Known pitfalls either way:
 `python3 scripts/transcribe.py <audio> <outdir>` (about 4 min per 13 min of audio). Read the whole transcript. Whisper mishears proper nouns (it heard "Dremel Club" for "Journal Club"), so cross-check names against later mentions, and leave uncertain names off screen.
 
 ### 3. Storyboard
-Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text.
+Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text. Then mark the 1 to 3 beats that get a signature device, and plan everything else in the house style.
 
 ### 4. Write scenes
 Copy `scripts/style.py` next to the scene files. Every scene subclasses `TL`, sets `T0, T1` in absolute audio seconds, and uses `self.till(t)` (absolute time) before each beat, then `self.end()`. Spread scenes across 3 or 4 files so they can be fixed and re-rendered independently. End each scene with a fade-out about 1 s before T1.

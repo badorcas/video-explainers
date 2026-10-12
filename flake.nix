@@ -58,6 +58,10 @@
             packages = e.tools;
             shellHook = ''echo "manim explainer env: manim $(python -c 'import manim; print(manim.__version__)')"'';
           } // e.envVars);
+          # Optional, large: only for the occasional 3D-rendered signature shot.
+          blender = pkgs.mkShell ({
+            packages = e.tools ++ [ pkgs.blender ];
+          } // e.envVars);
         });
 
       packages = forAll (pkgs:
