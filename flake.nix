@@ -1,7 +1,8 @@
 {
   description = "Reproducible environment for manim explainer videos (manim, LaTeX, ffmpeg, faster-whisper, pinned model and fonts)";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  # Pinned nixpkgs commit (nixos-unstable, Oct 2026). Bump with: nix flake update
+  inputs.nixpkgs.url = "https://github.com/NixOS/nixpkgs/archive/6510408d147d8c5e6d76043e899e9251756f6a75.tar.gz";
 
   outputs = { self, nixpkgs }:
     let
