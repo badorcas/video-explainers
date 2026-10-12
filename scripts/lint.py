@@ -25,7 +25,7 @@ either fix it or waive it in the scene class with a reason:
   wordy         more than 12 words of label text on screen for 3 s or more (principle 1)
   text-only     only text on screen, no graphic, for 3 s or more
 """
-import glob, json, os, re, subprocess, sys, unicodedata
+import ast, glob, json, os, re, subprocess, sys, unicodedata
 import numpy as np
 
 FPS = 5                     # analysis frame rate
@@ -336,6 +336,24 @@ def covered(a, b, host):
     return sum(max(0.0, min(b, hb) - max(a, ha)) for ha, hb in host) >= 0.8 * (b - a)
 
 
+def lint_ok_from_source(mod, scene):
+    """LINT_OK as written in <mod>.py now, so a new waiver needs no re-render (None if not found)."""
+    try:
+        tree = ast.parse(open(f"{mod}.py").read())
+    except (OSError, SyntaxError):
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == scene:
+            for st in node.body:
+                if isinstance(st, ast.Assign) and any(getattr(t, "id", "") == "LINT_OK" for t in st.targets):
+                    try:
+                        return ast.literal_eval(st.value)
+                    except ValueError:
+                        return None
+            return {}
+    return None
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     sheets = "--sheets" in sys.argv
@@ -357,10 +375,13 @@ def main():
             seam(a[1], b[1], cache.get(a[1]), cache.get(b[1]), tls[a[1]], tls[b[1]], dict(report)[a[1]])
     lines = []
     for scene, out in report:
-        ok = (tls.get(scene) or {}).get("lint_ok", {})
+        mod = dict((sc, m) for m, sc in specs)[scene]
+        ok = lint_ok_from_source(mod, scene)
+        if ok is None:
+            ok = (tls.get(scene) or {}).get("lint_ok", {})
         rows = []
         for sev, code, t, msg, *end in sorted(out, key=lambda r: r[2]):
-            why = ok.get(f"{code}@{int(t)}") or ok.get(code)
+            why = ok.get(f"{code}@{int(t)}") or ok.get(f"{code}@{round(t)}") or ok.get(code)   # 382.97 prints as 383.0
             if not why and end and covered(t, end[0], host):
                 sev, why = "HOST", "host on camera (intercut)"
             rows.append(f"{scene:5s} {'WAIVED' if why and sev != 'HOST' else sev:6s} {code:12s} t={t:6.1f}  {msg}"
