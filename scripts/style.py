@@ -14,6 +14,24 @@ FONT  = "Caladea"
 
 config.background_color = BG
 
+# manim's Indicate paints every part in the highlight colour, so an opaque box (a hash node, a
+# card) turns solid and its label vanishes into it. This one recolours outlines and unstroked
+# shapes (text glyphs, dots) only; a filled box keeps its fill.
+_ManimIndicate = Indicate
+
+
+class Indicate(_ManimIndicate):
+    def create_target(self):
+        target = self.mobject.copy()
+        target.scale(self.scale_factor)
+        for m in target.family_members_with_points():
+            if m.get_stroke_width() > 0:
+                m.set_stroke(self.color)
+            else:
+                m.set_fill(self.color)
+        return target
+
+
 # T() lays text out at 8x (see below), and manim hands Pango a wrap width of
 # config.pixel_width, so lines wider than ~4.7 units wrapped at -ql and ~10.6 at -qh
 # (and the text cache ignores the width, so a wrapped -ql layout leaked into -qh).

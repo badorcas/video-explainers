@@ -1,9 +1,10 @@
 """Contact sheet of frames from a rendered scene, for visual review.
 Usage: python3 grab.py <scene_output_name> t1 t2 ... -> /tmp/<name>.png (2 columns)"""
-import sys, subprocess, glob
+import sys, subprocess, glob, os
 from PIL import Image
 name, times = sys.argv[1], [float(x) for x in sys.argv[2:]]
-f = sorted(glob.glob(f"media/videos/**/{name}.mp4", recursive=True))[0]
+# newest render of the scene, whatever its quality (a stale HQ file must not win)
+f = max(glob.glob(f"media/videos/**/{name}.mp4", recursive=True), key=os.path.getmtime)
 ims = []
 for i, t in enumerate(times):
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", str(t), "-i", f, "-frames:v", "1", f"/tmp/g{i}.png"])
