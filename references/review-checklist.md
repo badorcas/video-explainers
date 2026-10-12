@@ -64,6 +64,13 @@ frames side by side.
   one-word label. (should fix)
 - **D7** Objects drawn "to scale" have true proportions (a car about 1.5 m tall, a door about 2 m, a person
   1.75 m). (should fix)
+- **D8** When two panels show the same event (a sloshing basin and its response curve, a map and its time
+  series), something visible ties them: a shared color, a marker that moves or pulses in step, or a
+  connector. Two side-by-side panels with no link is N. *Seen:* a sloshing harbor next to its resonance
+  curve, with nothing marking that the harbor sits at the peak. (should fix)
+- **D9** The scene's last picture shows the thing the narration ends on, with the same glyph the video
+  used for it before. *Seen:* a warning chain ending on a generic people icon while the narration said
+  "the signs", which S02 had drawn as the actual evacuation sign. (should fix)
 
 ## E. Layout
 - **E1** The composition is centred, or deliberately split into columns. No half of the frame stays empty

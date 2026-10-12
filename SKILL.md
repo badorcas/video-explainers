@@ -128,6 +128,25 @@ You are too close to your own frames: you know what each shape is supposed to be
 - `python3 scripts/assemble.py <audio> /mnt/user-data/outputs/<name>.mp4 part1:S01 ...` pads or trims each segment to its exact slot (so small timing drift never desyncs the audio), concatenates, and muxes the narration. It's resumable after a timeout.
 - Spot-check about 10 frames across the final file against the transcript times, then call `present_files`.
 
+## When the user sends notes after watching
+
+The user's notes on a finished video are for the checks, not a fix list: the video has shipped, so do
+not change it unless they ask. Turn every note into something that would have caught it before they saw it:
+
+1. **Mechanical first.** If a program could see it in the render, the label timeline or the scene
+   geometry, add or extend a check: `scripts/lint.py` for timing, composition and anything across frames;
+   `scripts/qa.py` for geometry within one frame. Prove it on the render the note was about (check out the
+   scene sources at the commit the user watched into a scratch dir and re-render at LQ): it must fire there.
+   Then run it over the whole video: if it fires on scenes the user did not flag, tighten it until those
+   hits are defensible, or make it a `CHECK` rather than an `ERROR`.
+2. **Rubric for the rest.** If it needs judgment (physics, meaning, consistency, taste), add or sharpen an
+   item in `references/review-checklist.md`: a yes/no question with a fixed way to check it, a severity,
+   and the note as its *Seen:* example. Prefer sharpening an existing item over adding a near-duplicate.
+3. **Log it** in `references/notes-log.md`: one row per note with the video, scene and time, the note in a
+   few words, and what catches it now (lint code, qa code or rubric id), and whether it was verified on the
+   original render.
+4. **Report back** one line per note: what now catches it, or why nothing can.
+
 ## Reporting back
 Keep the summary short:
 - what the video covers
