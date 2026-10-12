@@ -24,6 +24,11 @@ def T(s, size=26, color=INK, **kw):
 def M(s, size=34, color=INK):
     return MathTex(s, font_size=size, color=color)
 
+def Ms(*parts, size=34, color=INK):
+    """MathTex built from parts, so each stays addressable: Ms("E", "=", "P t").
+    Use it for any equation that will be stacked (eq_stack aligns on the "=" part)."""
+    return MathTex(*parts, font_size=size, color=color)
+
 ICON_DIRS = [os.environ.get("ICON_DIR", ""), "icons",
              os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "icons")]
 
@@ -43,6 +48,22 @@ def plate(mob, buff=0.1, color=None):
     bg = SurroundingRectangle(mob, buff=buff, corner_radius=0.06, stroke_width=0,
                               fill_color=color or BG, fill_opacity=1)
     return VGroup(bg, mob)
+
+def eq_stack(rows, buff=0.6, at="=", x=None):
+    """Stack equations with equal gaps and their relation symbols in one column, the way
+    an align* block sets them. Build each row with the symbol as its own substring:
+    Ms("M_2", "=", r"\frac{a}{b}"). `x` pins the column of the "=" signs."""
+    g = VGroup(*rows).arrange(DOWN, buff=buff)
+    def rel(r):
+        try:
+            p = r.get_part_by_tex(at)
+        except Exception:
+            p = None
+        return p if p is not None else r
+    x0 = rel(rows[0]).get_center()[0] if x is None else x
+    for r in rows:
+        r.shift(RIGHT*(x0 - rel(r).get_center()[0]))
+    return g
 
 def header(s):
     return T(s, 22, MUTE).to_corner(UL, buff=0.45)

@@ -9,6 +9,8 @@ Writes qa/<Scene>.txt, one line per problem (first occurrence only):
                  graphics read as a tangle. Unoutlined translucent shading (the area under
                  a curve, a range band) is exempt. Give the top layer an opaque fill (plate()),
                  fade what is underneath, or move one of them.
+  eq-align       equations stacked one above another whose "=" signs are not in one
+                 column: use eq_stack() (build "=" as its own substring)
   tips-collide   two arrowheads overlap (arrows converging on one point stack into a blob):
                  end each arrow at its own point on the target's edge, or merge the shafts
                  at a junction and draw one arrow from there
@@ -115,6 +117,17 @@ def _plated(x, bx, s, vis, pos):
     return False
 
 
+def _covered(pts, top, s, closed, pos, samp):
+    """True if an opaque shape drawn between `top` and `s` covers all of pts."""
+    for c in closed:
+        if c is top or c is s or _fill(c) < 0.95:
+            continue
+        if pos.get(id(top), 0) < pos.get(id(c), 0) < pos.get(id(s), 0):
+            if _inside_poly(pts, samp[id(c)]).all():
+                return True
+    return False
+
+
 def check(scene, t, log):
     texts, shapes = [], []
     for m in scene.mobjects:
@@ -126,7 +139,7 @@ def check(scene, t, log):
     pos = {id(m): i for i, m in enumerate(allm)}
     found = []
     samp = {id(s): _sample(s) for s in shapes}
-    vis = [s for s in shapes if _stroke_vis(s) or _fill(s) > 0.05]
+    vis = [s for s in shapes if _stroke_vis(s) or _fill(s) > 0.1]   # 10% or less reads as gone
 
     # off-frame
     for s in vis:
@@ -196,8 +209,34 @@ def check(scene, t, log):
             above = pos.get(id(s), 0) > pos.get(id(top), 0)
             if above and _closed(s) and _fill(s) >= 0.95:
                 continue          # an opaque card laid on top hides what it covers
+            if above and _covered(p[box][ins], top, s, closed, pos, samp):
+                continue          # the line sits on its own opaque card, which hides `top`
             if above or _fill(top) < 0.95:
                 found.append(("see-through", f"{_name(s)} {'over' if above else 'through'} {_name(top)}"))
+
+    # stacked equations must share the column of their "=" sign
+    def _eq_x(m):
+        try:
+            p = m.get_part_by_tex("=")
+        except Exception:
+            return None
+        if p is None or p is m:
+            return None
+        try:
+            if p.get_tex_string().strip() != "=":
+                return None
+        except Exception:
+            return None
+        return p.get_center()[0]
+    eqs = [(m, _eq_x(m)) for m in texts if isinstance(m, SingleStringMathTex)]
+    eqs = [(m, x) for m, x in eqs if x is not None]
+    for i, (a, xa) in enumerate(eqs):
+        for b, xb in eqs[i+1:]:
+            ba, bb = _bbox(a), _bbox(b)
+            overlap_x = min(ba[1], bb[1]) - max(ba[0], bb[0]) > 0.3 * min(a.width, b.width)
+            gap_y = max(ba[2], bb[2]) - min(ba[3], bb[3])
+            if overlap_x and gap_y < 1.6 and abs(xa - xb) > 0.06:
+                found.append(("eq-align", f"{_name(a)} / {_name(b)}: '=' off by {abs(xa - xb):.2f}"))
 
     # arrowheads that overlap each other
     tips = [s for s in vis if isinstance(s, ArrowTip)]
