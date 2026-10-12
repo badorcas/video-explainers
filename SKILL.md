@@ -21,6 +21,16 @@ These come from direct user feedback on a finished video. The equations, the cle
 8. **Draw recognizable things accurately or not at all.** A wobbly freehand outline of an eye or brain distracts more than it helps. Anatomy, organs and instruments must come from a real reference: trace or import an accurate outline (see "Anatomy and biology" in `references/creative-devices.md`), keep correct proportions and relative positions, and prefer a clean schematic view (a standard sagittal or axial section) over an inaccurate realistic one. If an accurate outline isn't available, use a recognized schematic convention for the field instead of improvising.
 9. **Consistent encoding.** One color means one thing for the whole video (TX blue = outgoing or ours, RX orange = echo, BRAKE red = braking, AMBER = signals, gray = context). Text set in a color only to match the thing it names.
 
+## Hard rules from review (each one came from a user complaint)
+
+These are not style preferences. A video that breaks one is not done.
+
+- **Kerning: always make text with `T()`, never `Text()` directly.** At the small sizes manim lays text out at, Pango snaps each glyph advance to a whole pixel, which produces "Ar ray", "et  al", "Workfl ow". `T()` lays out at 8x and scales down. The same goes for any helper that builds text.
+- **Real objects come from the icon set, never hand-plotted polygons.** A plane drawn from a list of coordinates came out angular and wrong. Use `icon("airplane", h)` (and `car`, `truck`, `user`, `hard-drives`, `cpu`, `lightning`, `clock`, `file-text`, `thermometer`, `currency-dollar`, ... see `assets/icons/`, Phosphor fill set, MIT). Each is drawn as an off-white outline with an opaque dark fill. If an object isn't in the set, fetch the Phosphor fill SVG from `cdn.jsdelivr.net/npm/@phosphor-icons/core@2.1.1/assets/fill/<name>-fill.svg` into `assets/icons/`. If you truly must draw one, build it from smooth curves (arcs, rounded rectangles, `set_points_smoothly`), then look at a full-size still before using it. Some icon sets (Tabler) include an invisible bounding-box path that renders as a square: delete it. Abstract diagram parts (nodes, bars, boxes, servers-as-rack-units) stay as primitives.
+- **No text on top of graphics.** A label never sits on a line, an arrow, another label, or the edge of a filled shape. Move it into clear space. If it must sit over something, back it with `plate(label)` (opaque background).
+- **Layers must hide what is under them.** When one graphic sits on another, the top one gets an opaque fill (`fill_opacity=1`) so the lines underneath don't show through; or fade/clear the bottom layer first. Translucent fills over lines, outline-only shapes with edges running through them, and arrows drawn across boxes all read as a tangle. Draw order matters: edges first, then nodes on top.
+- **These are checked automatically.** `scripts/qa.py` runs at every `self.till()` when `QA=1` (`scripts/lq.sh` sets it) and writes `qa/<Scene>.txt`. Every line in it must be fixed before the final render, or deliberately waived with `mob.qa_ok = True` for a reason you can state (for example, a shaded range band laid over its own scale line).
+
 Style defaults are in `scripts/style.py`: near-black background, off-white ink, Caladea serif, thin strokes. If the user prefers a light Tufte "paper" look, swap BG/INK/MUTE/FAINT there; everything else follows.
 
 ## Creativity, used sparingly
@@ -69,11 +79,13 @@ Known pitfalls either way:
 Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text. Then mark the 1 to 3 beats that get a signature device, and plan everything else in the house style.
 
 ### 4. Write scenes
-Copy `scripts/style.py` next to the scene files. Every scene subclasses `TL`, sets `T0, T1` in absolute audio seconds, and uses `self.till(t)` (absolute time) before each beat, then `self.end()`. Spread scenes across 3 or 4 files so they can be fixed and re-rendered independently. End each scene with a fade-out about 1 s before T1.
+Copy `scripts/style.py`, `scripts/qa.py` and `scripts/lq.sh` next to the scene files (set `ICON_DIR` to `assets/icons`, or copy that folder as `icons/`). Every scene subclasses `TL`, sets `T0, T1` in absolute audio seconds, and uses `self.till(t)` (absolute time) before each beat, then `self.end()`. Spread scenes across 3 or 4 files so they can be fixed and re-rendered independently. End each scene with a fade-out about 1 s before T1.
 
 ### 5. Review loop at low quality (do not skip)
-Render each scene with `manim -ql --disable_caching -o <Scene> file.py <Scene>` (about 10 s per minute of video). Make contact sheets with `python3 scripts/grab.py <Scene> t1 t2 t3 t4` and view them. Check for:
-- clipped text at the frame edges, labels overlapping lines or each other
+Render with `bash lq.sh <file> "S01 S02 ..."` (about 10 s per minute of video). It runs the layout QA and writes the issue count per scene to `lq_<file>.txt`; read `qa/<Scene>.txt` and clear every line. Then make contact sheets with `python3 scripts/grab.py <Scene> t1 t2 t3 t4` and view them: the QA catches geometry, not meaning. Check for:
+- clipped text at the frame edges, labels overlapping lines or each other, lines showing through a layer on top (the QA flags these; confirm by eye)
+- letter spacing that looks uneven (means something bypassed `T()`)
+- hand-drawn objects that look angular or off-model (replace with `icon()`)
 - rays and paths that do something geometrically wrong (retro-reflectors that don't retro-reflect)
 - frames that are mostly words (apply principle 1)
 - technical structures the narration names but the frame leaves unlabeled (principle 2)

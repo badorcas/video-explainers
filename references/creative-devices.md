@@ -43,8 +43,9 @@ For hero objects that need recognition, or a point-of-view shot. Example: "the v
 - Moving parts (brake lights, signals, beams) stay as manim overlays anchored to the render's bounding box.
 
 ### Icon sets
-For many small recognizable objects (sensors, phones, buildings).
-- Sources: Tabler, Phosphor, Lucide (MIT), game-icons.net (CC BY, needs attribution).
+The default for any recognizable object (planes, vehicles, people, servers, documents, sensors, buildings). Never hand-plot a polygon for one.
+- Bundled: `assets/icons/` holds the Phosphor *fill* set (MIT). Load with `icon(name, h)` from style.py: off-white outline, opaque dark fill, which matches the house stroke style.
+- More from the same family: `https://cdn.jsdelivr.net/npm/@phosphor-icons/core@2.1.1/assets/fill/<name>-fill.svg`. Other sources: Tabler, Lucide (MIT), game-icons.net (CC BY, needs attribution). Tabler SVGs carry an invisible `M0 0h24v24H0z` bounding path that manim renders as a square; remove it.
 - Import with `SVGMobject`. Use one family per video.
 - Check at the real on-screen size, often 80 to 120 px at 1080p. Discard icons that turn to mush.
 

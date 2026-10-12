@@ -1,5 +1,6 @@
 from manim import *
 import numpy as np
+import os
 
 BG    = "#14161A"
 INK   = "#E6E3DC"
@@ -13,11 +14,35 @@ FONT  = "Caladea"
 
 config.background_color = BG
 
+KERN = 8
 def T(s, size=26, color=INK, **kw):
-    return Text(s, font=FONT, font_size=size, color=color, **kw)
+    """Always make text with T(), never Text(). Pango snaps glyph advances to whole pixels
+    at the small sizes manim lays text out at, which wrecks kerning ("Ar ray", "Workfl ow").
+    Laying out at 8x and scaling down gives correct spacing."""
+    return Text(s, font=FONT, font_size=size*KERN, color=color, **kw).scale(1/KERN)
 
 def M(s, size=34, color=INK):
     return MathTex(s, font_size=size, color=color)
+
+ICON_DIRS = [os.environ.get("ICON_DIR", ""), "icons",
+             os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "icons")]
+
+def icon(name, h=1.0, color=INK, fill=None, sw=2):
+    """Recognizable object from the bundled Phosphor set (assets/icons, MIT): outline in
+    `color`, opaque dark fill so nothing behind shows through. Never hand-plot polygons
+    for planes, cars, people, servers...; see SKILL.md."""
+    for d in ICON_DIRS:
+        p = os.path.join(d, name + ".svg")
+        if d and os.path.exists(p):
+            m = SVGMobject(p)
+            return m.set_fill(fill or "#1E2127", 1).set_stroke(color, sw).scale_to_fit_height(h)
+    raise FileNotFoundError(f"icon {name!r}: not in {ICON_DIRS}")
+
+def plate(mob, buff=0.1, color=None):
+    """Opaque backing behind a label or panel that sits on top of other graphics."""
+    bg = SurroundingRectangle(mob, buff=buff, corner_radius=0.06, stroke_width=0,
+                              fill_color=color or BG, fill_opacity=1)
+    return VGroup(bg, mob)
 
 def header(s):
     return T(s, 22, MUTE).to_corner(UL, buff=0.45)
@@ -88,11 +113,24 @@ class TL(Scene):
     def now(self):
         return self.T0 + self.renderer.time
     def till(self, t):
+        self._qa()
         dt = t - self.now()
         if dt > 0.04:
             self.wait(dt)
     def end(self):
         self.till(self.T1)
+        if os.environ.get("QA") == "1":
+            import qa
+            qa.flush(self, self._qalog())
+    def _qalog(self):
+        if not hasattr(self, "_qa_log"):
+            self._qa_log = {"seen": set(), "lines": []}
+        return self._qa_log
+    def _qa(self):
+        """Layout check of the current frame (QA=1, set by the low-quality render script)."""
+        if os.environ.get("QA") == "1":
+            import qa
+            qa.check(self, self.now(), self._qalog())
 
 # ---------- vehicles that read without labels (top-down, facing +x) ----------
 def sedan(x=0, y=0, L=1.0, W=0.48, color=INK, fill="#1E2127"):
