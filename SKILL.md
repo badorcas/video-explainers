@@ -27,7 +27,23 @@ Raster art: there is no image generator in the claude.ai container. For richer o
 ## Workflow
 
 ### 1. Environment (once per container)
-`bash scripts/setup.sh` installs pango headers, dvisvgm (needed by MathTex) and manim plus faster-whisper. Known pitfalls:
+Preferred: the bundled Nix flake (`flake.nix` + `flake.lock`). It pins nixpkgs, manim, faster-whisper, ffmpeg, a minimal TeX with dvisvgm, the Caladea font (through a private fontconfig), and the Whisper weights (pinned to a Hugging Face commit and hash-checked). Everything comes from the binary cache, about 4 min on a cold container.
+
+Installing Nix in the claude.ai container (running as root, no daemon):
+```bash
+mkdir -p /etc/nix && printf 'build-users-group =\nexperimental-features = nix-command flakes\nsandbox = false\n' > /etc/nix/nix.conf
+curl -sSfL https://nixos.org/nix/install -o /tmp/nix-install.sh && USER=root sh /tmp/nix-install.sh --no-daemon --yes
+export PATH=/root/.nix-profile/bin:$PATH      # the profile script needs bash; setting PATH is enough
+```
+Copy the skill folder somewhere writable and run it as a git repo (flakes only see tracked files: `git init && git add -A`). Then either:
+- `nix develop -c bash -c "cd <work> && manim ..."` for interactive steps, or
+- `nix run <skill>#transcribe -- <audio> <outdir>`, `#render`, `#assemble`, `#grab` (same arguments as the scripts below).
+
+The nixpkgs input is a commit tarball rather than `github:` because unauthenticated GitHub API calls from the container hit rate limits.
+
+Fallback without Nix: `bash scripts/setup.sh` (apt pango headers and dvisvgm, then pip install manim and faster-whisper; versions float).
+
+Known pitfalls either way:
 - Type1 fonts (such as Bitstream Charter) silently fall back to sans in pango; use Caladea or another TTF/OTF and confirm with a test frame.
 - `-qh` means 1080p **60**; always pass `--frame_rate 30`. That halves render time.
 - Every tool call is capped at 300 s. Run transcription, rendering and assembly detached (`setsid nohup ... >/dev/null 2>&1 </dev/null &`) and poll a progress file in later calls.
