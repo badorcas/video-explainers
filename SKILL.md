@@ -12,13 +12,14 @@ The output is an MP4 whose picture is timed to the narration second by second. Q
 These come from direct user feedback on a finished video. The equations, the clean dark style and the step-by-step builds were praised. Text-heavy frames, obvious labels and an invented diagram style were the complaints.
 
 1. **Show, don't caption.** Never put on screen a sentence the narrator is already saying. If a frame needs words to make sense, redesign the frame. Allowed text: equations, axis names, a few key numbers (0.24 m, 70°), and a short label only where the picture is truly ambiguous. Target: most frames have under five words that aren't math.
-2. **Trust the viewer.** Don't label things recognizable by shape. Draw a van as a van and a car as a car (`sedan()`, `van()` in style.py) instead of boxes saying "you" and "van". Show the viewer's car by position and camera framing, not a tag.
+2. **Trust the viewer, but label what the lesson names.** Don't label everyday things recognizable by shape. Draw a van as a van and a car as a car (`sedan()`, `van()` in style.py) instead of boxes saying "you" and "van". Show the viewer's car by position and camera framing, not a tag. The exception is technical structures whose names are the point: anatomy (retina, optic nerve, LGN, occipital cortex), circuit components, named parts of an instrument. Label those directly with a thin leader line, introduce each label as the narration names it, and use the field's standard term. An unlabeled structure the viewer is supposed to learn is a missed lesson, not restraint.
 3. **Make the physical event visible.** Braking = brake lights plus the car visibly slowing and the gap shrinking. A turn signal = a rhythmic amber pulse at the front corner at about 1.5 Hz while the car drifts, not a dot blinking in place. "Harder braking" = a shorter stopping distance drawn on the road, not a bar labeled "hard".
 4. **Use the field's standard notation.** Control or processing loops use a controls-style block diagram: forward path left to right, feedback path returning underneath (`block`, `chain`, `feedback` in style.py), animated by a signal pulse moving through the blocks. Pure schedules (do X, then Y, every 100 ms) use a timing diagram with lanes on a shared time axis. Use circuit symbols for circuits and ray diagrams for optics. Never invent a bespoke cyclical flowchart.
 5. **Tufte data-ink.** Range-frame axes with no tips and no tick clutter. Label lines and peaks directly instead of using legends. Label only the values the narration uses. Never fabricate data: if the source only gives a worst-case error, draw a band, not invented points. If a plot is illustrative, tag it small and dim ("schematic").
 6. **Equations are a strength.** Build them with Write, color terms to match the diagram (outgoing signal blue, echo orange), use underbraces for meaning ("out", "back"), and keep each equation on screen while it is being discussed.
 7. **One idea per beat.** Each new element appears when the narration reaches it. Fade out what is no longer relevant instead of piling up.
-8. **Consistent encoding.** One color means one thing for the whole video (TX blue = outgoing or ours, RX orange = echo, BRAKE red = braking, AMBER = signals, gray = context). Text set in a color only to match the thing it names.
+8. **Draw recognizable things accurately or not at all.** A wobbly freehand outline of an eye or brain distracts more than it helps. Anatomy, organs and instruments must come from a real reference: trace or import an accurate outline (see "Anatomy and biology" in `references/creative-devices.md`), keep correct proportions and relative positions, and prefer a clean schematic view (a standard sagittal or axial section) over an inaccurate realistic one. If an accurate outline isn't available, use a recognized schematic convention for the field instead of improvising.
+9. **Consistent encoding.** One color means one thing for the whole video (TX blue = outgoing or ours, RX orange = echo, BRAKE red = braking, AMBER = signals, gray = context). Text set in a color only to match the thing it names.
 
 Style defaults are in `scripts/style.py`: near-black background, off-white ink, Caladea serif, thin strokes. If the user prefers a light Tufte "paper" look, swap BG/INK/MUTE/FAINT there; everything else follows.
 
@@ -75,6 +76,8 @@ Render each scene with `manim -ql --disable_caching -o <Scene> file.py <Scene>` 
 - clipped text at the frame edges, labels overlapping lines or each other
 - rays and paths that do something geometrically wrong (retro-reflectors that don't retro-reflect)
 - frames that are mostly words (apply principle 1)
+- technical structures the narration names but the frame leaves unlabeled (principle 2)
+- anatomy or objects that look hand-wavy, out of proportion, or anatomically wrong (principle 8): compare against the reference image side by side
 - empty halves of the frame, lopsided layouts
 - color meaning drift across scenes
 

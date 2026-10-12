@@ -53,6 +53,18 @@ For a specific illustrated style that no icon set has.
 - Source or generate the image outside the container, then vectorize with `vtracer` or `potrace` into SVG.
 - Verify the license of the source image.
 
+### Anatomy and biology
+For eyes, brains, hearts, cells, and pathways between them. Freehand manim primitives (circles, bezier blobs) look amateurish here and distract the viewer.
+- Start from an accurate vector source, never an improvised outline:
+  - Servier Medical Art (smart.servier.com, CC BY 4.0, needs credit): organs, cells, sections; SVG/PPT.
+  - Wikimedia Commons anatomical SVGs (check each file's license; many are CC BY-SA or public domain), e.g. sagittal brain, eye cross-section, visual pathway diagrams.
+  - Gray's Anatomy plates (public domain) traced with `potrace`/`vtracer` when no SVG exists.
+  - BioIcons (bioicons.com, mostly CC0/CC BY) for cells and lab objects.
+- Simplify after import: drop shading and fills, keep the outline and only the internal structures the narration uses, recolor to INK at the house stroke weight. Keep proportions and positions; don't rescale parts independently.
+- Use the textbook view for the concept: sagittal for cortex lobes, axial (inferior) view for the visual pathway (retina, optic nerve, chiasm, optic tract, LGN, optic radiations, V1), cross-section for the eye.
+- Label every structure the narration names, with a thin leader line and the standard term, appearing as it is named. Move signals (a pulse along the pathway) as manim overlays on top of the imported outline.
+- Check the frame against the reference image before rendering at high quality. Wrong anatomy (pathway through the wrong structure, cerebellum in the wrong place) is worse than no picture.
+
 ### Small multiples
 For comparing conditions: with and without the reflector, at 1 to 4 m, in rain or clear.
 - A grid of identical miniature plots sharing axes (Tufte). Often more creative and clearer than any animation.
