@@ -9,13 +9,16 @@ Writes qa/<Scene>.txt, one line per problem (first occurrence only):
                  graphics read as a tangle. Unoutlined translucent shading (the area under
                  a curve, a range band) is exempt. Give the top layer an opaque fill (plate()),
                  fade what is underneath, or move one of them.
+  tips-collide   two arrowheads overlap (arrows converging on one point stack into a blob):
+                 end each arrow at its own point on the target's edge, or merge the shafts
+                 at a junction and draw one arrow from there
   off-frame      something visible lies outside the 16:9 frame (text within 0.25 of the edge)
 
 Opt a mobject out with `m.qa_ok = True` (it and its children are skipped), e.g. a label
 deliberately set on a bar of the same color family."""
 import os
 import numpy as np
-from manim import Text, MarkupText, SingleStringMathTex, VMobject, config
+from manim import Text, MarkupText, SingleStringMathTex, VMobject, ArrowTip, config
 
 TEXT_TYPES = (Text, MarkupText, SingleStringMathTex)
 FW, FH = config.frame_width / 2, config.frame_height / 2
@@ -195,6 +198,19 @@ def check(scene, t, log):
                 continue          # an opaque card laid on top hides what it covers
             if above or _fill(top) < 0.95:
                 found.append(("see-through", f"{_name(s)} {'over' if above else 'through'} {_name(top)}"))
+
+    # arrowheads that overlap each other
+    tips = [s for s in vis if isinstance(s, ArrowTip)]
+    for i, a in enumerate(tips):
+        pa = _sample(a)
+        for b in tips[i+1:]:
+            pb = _sample(b)
+            if np.linalg.norm(a.get_center() - b.get_center()) > a.width + b.width:
+                continue
+            if _inside_poly(pa, pb).any() or _inside_poly(pb, pa).any() or \
+                    np.linalg.norm(a.get_center() - b.get_center()) < 0.5 * min(a.width, b.width):
+                found.append(("tips-collide", f"{_name(a)} / {_name(b)} at "
+                              f"({a.get_center()[0]:.1f}, {a.get_center()[1]:.1f})"))
 
     for k, d in found:
         key = (k, d)
