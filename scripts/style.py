@@ -1,0 +1,149 @@
+from manim import *
+import numpy as np
+
+BG    = "#14161A"
+INK   = "#E6E3DC"
+MUTE  = "#7C828C"
+FAINT = "#3A3F47"
+TX    = "#6CB4EE"   # outgoing / radar
+RX    = "#F0A04B"   # echo
+BRAKE = "#E5534B"
+AMBER = "#F5C542"
+FONT  = "Caladea"
+
+config.background_color = BG
+
+def T(s, size=26, color=INK, **kw):
+    return Text(s, font=FONT, font_size=size, color=color, **kw)
+
+def M(s, size=34, color=INK):
+    return MathTex(s, font_size=size, color=color)
+
+def header(s):
+    return T(s, 22, MUTE).to_corner(UL, buff=0.45)
+
+# ---------- road geometry (top-down, travel left->right) ----------
+LANE_Y, ROAD_BOT, ROAD_TOP, CENTER_Y, SHEET_Y = -0.5, -1.2, 1.4, 0.1, -1.6
+X0, X1 = -7.1, 7.1
+TAN20 = np.tan(np.radians(20))
+
+def road(sheet=False):
+    g = VGroup(
+        Line([X0, ROAD_BOT, 0], [X1, ROAD_BOT, 0], color=MUTE, stroke_width=2),
+        Line([X0, ROAD_TOP, 0], [X1, ROAD_TOP, 0], color=MUTE, stroke_width=2),
+        DashedLine([X0, CENTER_Y, 0], [X1, CENTER_Y, 0], color=FAINT, stroke_width=2, dash_length=0.25),
+    )
+    if sheet:
+        g.add(metal_sheet())
+    return g
+
+def metal_sheet(x0=X0, x1=X1, y=SHEET_Y):
+    return Line([x0, y, 0], [x1, y, 0], color="#B8C2CC", stroke_width=6)
+
+def car(x, y=LANE_Y, L=0.95, W=0.5, fill=None, label=None, lsize=22):
+    body = RoundedRectangle(corner_radius=0.08, width=L, height=W, stroke_color=INK,
+                            stroke_width=2, fill_color=fill or BG, fill_opacity=1).move_to([x, y, 0])
+    g = VGroup(body)
+    if label:
+        g.add(T(label, lsize, INK).move_to(body))
+    return g
+
+def brake_lights(c):
+    b = c[0]
+    l = b.get_left()
+    h = b.height
+    return VGroup(*[Rectangle(width=0.06, height=h*0.22, stroke_width=0, fill_color=BRAKE,
+                              fill_opacity=1).move_to(l + RIGHT*0.05 + UP*s*h*0.33) for s in (1, -1)])
+
+def blinker(c):
+    b = c[0]
+    return Dot(b.get_corner(UL) + RIGHT*0.12 + DOWN*0.06, radius=0.05, color=AMBER)
+
+def zigzag(xc_front, xa_rear, y_lane=LANE_Y, y_sheet=SHEET_Y):
+    xm = (xc_front + xa_rear) / 2
+    return [np.array([xc_front, y_lane, 0]), np.array([xm, y_sheet, 0]), np.array([xa_rear, y_lane, 0])]
+
+def corner_icon(scale=0.18, color=INK):
+    tri = Triangle(color=color, stroke_width=2).scale(scale)
+    c = tri.get_center()
+    spokes = VGroup(*[Line(c, v, color=color, stroke_width=1.5) for v in tri.get_vertices()])
+    return VGroup(tri, spokes)
+
+def spectrum_axes(w=6, h=2.0, xmax=10):
+    ax = Axes(x_range=[0, xmax, 1], y_range=[0, 1.1, 1], x_length=w, y_length=h,
+              axis_config={"include_tip": False, "stroke_color": MUTE, "stroke_width": 2,
+                           "include_ticks": False})
+    return ax
+
+def peaks(ax, spec, xmax=10, noise=0.0, color=INK):
+    def f(x):
+        return noise + sum(a*np.exp(-((x-m)/s)**2) for m, a, s in spec)
+    return ax.plot(f, x_range=[0, xmax, 0.02], color=color, stroke_width=2.5)
+
+class TL(Scene):
+    T0 = 0.0
+    T1 = 0.0
+    def setup(self):
+        self.camera.background_color = BG
+    def now(self):
+        return self.T0 + self.renderer.time
+    def till(self, t):
+        dt = t - self.now()
+        if dt > 0.04:
+            self.wait(dt)
+    def end(self):
+        self.till(self.T1)
+
+# ---------- vehicles that read without labels (top-down, facing +x) ----------
+def sedan(x=0, y=0, L=1.0, W=0.48, color=INK, fill="#1E2127"):
+    body = RoundedRectangle(corner_radius=W * 0.32, width=L, height=W, stroke_color=color,
+                            stroke_width=2, fill_color=fill, fill_opacity=1)
+    ws = Polygon([L*0.12, W*0.36, 0], [L*0.22, W*0.30, 0], [L*0.22, -W*0.30, 0], [L*0.12, -W*0.36, 0],
+                 stroke_width=0, fill_color=color, fill_opacity=0.35)          # windshield
+    rw = Polygon([-L*0.30, W*0.33, 0], [-L*0.36, W*0.28, 0], [-L*0.36, -W*0.28, 0], [-L*0.30, -W*0.33, 0],
+                 stroke_width=0, fill_color=color, fill_opacity=0.25)          # rear window
+    roof = Line([L*0.10, 0, 0], [-L*0.28, 0, 0], stroke_width=0)
+    return VGroup(body, ws, rw).move_to([x, y, 0])
+
+def van(x=0, y=0, L=1.6, W=0.95, color=INK, fill="#2B2F36"):
+    body = RoundedRectangle(corner_radius=0.06, width=L, height=W, stroke_color=color,
+                            stroke_width=2, fill_color=fill, fill_opacity=1)
+    cab = Rectangle(width=L*0.16, height=W*0.86, stroke_width=0, fill_color=color,
+                    fill_opacity=0.3).move_to([L*0.36, 0, 0])
+    seam = Line([L*0.26, W/2, 0], [L*0.26, -W/2, 0], color=color, stroke_width=1.2, stroke_opacity=0.5)
+    return VGroup(body, cab, seam).move_to([x, y, 0])
+
+def turn_signal(vehicle, side=1):
+    """Amber wedge at the front corner; animate with Flash-like opacity pulses at ~1.5 Hz."""
+    b = vehicle[0]
+    c = b.get_corner(UR if side > 0 else DR)
+    return Polygon(c, c + LEFT*0.14, c + (DOWN if side > 0 else UP)*0.12,
+                   stroke_width=0, fill_color=AMBER, fill_opacity=1)
+
+# ---------- standard block diagram (controls convention) ----------
+def block(text_or_mob, w=1.9, h=0.8):
+    box = Rectangle(width=w, height=h, stroke_color=INK, stroke_width=2)
+    inner = text_or_mob if isinstance(text_or_mob, Mobject) else T(text_or_mob, 20)
+    inner.move_to(box).scale_to_fit_width(min(inner.width, w * 0.85))
+    return VGroup(box, inner)
+
+def chain(blocks, buff=0.55, y=0):
+    """Left-to-right forward path with arrows. Returns (VGroup(blocks), VGroup(arrows))."""
+    g = VGroup(*blocks).arrange(RIGHT, buff=buff).set_y(y)
+    arrows = VGroup(*[Arrow(a.get_right(), b.get_left(), buff=0.05, stroke_width=2, color=MUTE,
+                            max_tip_length_to_length_ratio=0.25) for a, b in zip(blocks, blocks[1:])])
+    return g, arrows
+
+def feedback(src, dst, drop=0.9, color=MUTE):
+    """Return path drawn under the forward chain: down from src, left, up into dst."""
+    p0 = src.get_bottom(); p3 = dst.get_bottom()
+    p1 = p0 + DOWN * drop; p2 = np.array([p3[0], p1[1], 0])
+    path = VMobject(color=color, stroke_width=2).set_points_as_corners([p0, p1, p2, p3 + DOWN * 0.12])
+    tip = Triangle(color=color, fill_opacity=1, stroke_width=0).scale(0.08).move_to(p3 + DOWN * 0.08)
+    return VGroup(path, tip)
+
+def pulse_along(scene, path_mob, color=TX, run_time=1.5):
+    """A dot travelling a path: use to animate a signal moving through a diagram."""
+    d = Dot(path_mob.get_start(), radius=0.07, color=color)
+    scene.play(MoveAlongPath(d, path_mob), run_time=run_time, rate_func=linear)
+    scene.remove(d)
