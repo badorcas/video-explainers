@@ -4,6 +4,7 @@ A Claude skill and reproducible toolchain for turning narration audio into a syn
 
 - `SKILL.md`: workflow and visual principles
 - `references/creative-devices.md`: when and how to use 3D, morphs, icons, Blender renders
+- `references/expert-review.md`: prompt for the independent expert review gates
 - `scripts/`: style kit, layout QA, transcription, rendering, review contact sheets, assembly
 - `assets/icons/`: Phosphor fill icons (MIT) for recognizable objects, loaded with `icon()`
 - `flake.nix`: pinned environment (manim, TeX, ffmpeg, faster-whisper, model weights, fonts)

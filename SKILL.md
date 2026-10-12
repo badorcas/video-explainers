@@ -18,7 +18,7 @@ These come from direct user feedback on a finished video. The equations, the cle
 5. **Tufte data-ink.** Range-frame axes with no tips and no tick clutter. Label lines and peaks directly instead of using legends. Label only the values the narration uses. Never fabricate data: if the source only gives a worst-case error, draw a band, not invented points. If a plot is illustrative, tag it small and dim ("schematic").
 6. **Equations are a strength.** Build them with Write, color terms to match the diagram (outgoing signal blue, echo orange), use underbraces for meaning ("out", "back"), and keep each equation on screen while it is being discussed.
 7. **One idea per beat.** Each new element appears when the narration reaches it. Fade out what is no longer relevant instead of piling up.
-8. **Draw recognizable things accurately or not at all.** A wobbly freehand outline of an eye or brain distracts more than it helps. Anatomy, organs and instruments must come from a real reference: trace or import an accurate outline (see "Anatomy and biology" in `references/creative-devices.md`), keep correct proportions and relative positions, and prefer a clean schematic view (a standard sagittal or axial section) over an inaccurate realistic one. If an accurate outline isn't available, use a recognized schematic convention for the field instead of improvising.
+8. **Draw recognizable things accurately or not at all.** A wobbly freehand outline of an eye or brain distracts more than it helps. Anatomy, organs and instruments must come from a real reference: trace or import an accurate outline (see "Anatomy and biology" in `references/creative-devices.md`), keep correct proportions and relative positions, and prefer a clean schematic view (a standard sagittal or axial section) over an inaccurate realistic one. If an accurate outline isn't available, use a recognized schematic convention for the field instead of improvising. Icons like `icon("brain")` or `icon("eye")` are fine as a token for an idea ("the brain decides"), never when the anatomy itself is being taught.
 9. **Consistent encoding.** One color means one thing for the whole video (TX blue = outgoing or ours, RX orange = echo, BRAKE red = braking, AMBER = signals, gray = context). Text set in a color only to match the thing it names.
 
 ## Hard rules from review (each one came from a user complaint)
@@ -78,6 +78,8 @@ Known pitfalls either way:
 ### 3. Storyboard
 Split the transcript into scenes of roughly 30 to 90 s at topic boundaries. For each scene write down its absolute start/end (T0/T1) and a beat list: timestamp → what appears or moves. For each beat, ask "what would this look like with no words?" before reaching for text. Then mark the 1 to 3 beats that get a signature device, and plan everything else in the house style.
 
+**Gate 1: independent expert review of the storyboard.** Before writing any scene code, have the storyboard checked by a reviewer who did not write it (see "Independent expert review" below). Do not start step 4 until it passes.
+
 ### 4. Write scenes
 Copy `scripts/style.py`, `scripts/qa.py` and `scripts/lq.sh` next to the scene files (set `ICON_DIR` to `assets/icons`, or copy that folder as `icons/`). Every scene subclasses `TL`, sets `T0, T1` in absolute audio seconds, and uses `self.till(t)` (absolute time) before each beat, then `self.end()`. Spread scenes across 3 or 4 files so they can be fixed and re-rendered independently. End each scene with a fade-out about 1 s before T1.
 
@@ -95,6 +97,18 @@ Render with `bash lq.sh <file> "S01 S02 ..."` (about 10 s per minute of video). 
 
 Fix, re-render, re-check. Do this before the slow full render.
 
+**Gate 2: independent expert review of the frames.** Once your own pass is clean, send every contact sheet to an independent reviewer. Fix every blocking issue, re-render, and re-review the changed scenes until they pass. Do not start the final render until every scene has passed.
+
+### Independent expert review
+You are too close to your own frames: you know what each shape is supposed to be, so you can't see that it doesn't read. Every graphic gets checked by a fresh reviewer before it ships.
+- **Who:** a subagent with fresh context (Agent/Task tool) when one is available. It must not see your reasoning, only the inputs below. If no subagent tool exists, ask the user to review the contact sheets before the final render; never skip the gate on your own judgment.
+- **Persona:** a subject-matter expert in the video's field (e.g. neuroanatomist for the visual pathway, RF engineer for radar) who is also a demanding explainer-video editor. Use one reviewer per gate; for a mixed topic, give it both expertises.
+- **Inputs:** the transcript excerpt for each scene, the storyboard (Gate 1) or contact sheets (Gate 2), any reference images or source figures used, and the "Visual principles" and "Hard rules from review" sections of this file. At Gate 2, clear `qa/<Scene>.txt` first; the reviewer is for what automated QA can't see. Do not include your own assessment.
+- **What it checks:** factual and anatomical/technical accuracy (correct structures, order, positions, proportions, notation); whether each frame reads with the sound off; that named structures are labeled with standard terms; drawing quality (anything wobbly, amateurish or distracting); clutter, layout and color-encoding consistency; anything that misleads.
+- **Output it must return:** per scene, PASS or FAIL, then a list of issues, each with frame time, severity (blocking / should fix / nit) and a concrete fix. Blocking = wrong facts, wrong anatomy, misleading or unreadable graphics, or a drawing bad enough to distract.
+- **Rule:** fix all blocking issues and nearly all should-fix ones. If you disagree with a finding, say why in the final report instead of silently ignoring it. Re-review a scene after any non-trivial fix.
+- **Prompt template:** `references/expert-review.md`.
+
 ### 6. Final render and assembly
 - `setsid nohup bash scripts/render_all.sh "part1:S01 part1:S02 ..." ...&` takes about 1 min of render time per minute of video at 1080p30. Poll `progress.txt` and `fails.txt`.
 - `python3 scripts/assemble.py <audio> /mnt/user-data/outputs/<name>.mp4 part1:S01 ...` pads or trims each segment to its exact slot (so small timing drift never desyncs the audio), concatenates, and muxes the narration. It's resumable after a timeout.
@@ -106,3 +120,4 @@ Keep the summary short:
 - any transcript corrections made
 - anything shown as schematic rather than sourced data
 - the one or two choices the user may want to flip (dark vs. light, pacing)
+- reviewer findings you chose not to act on, and why
