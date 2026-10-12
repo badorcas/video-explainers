@@ -14,6 +14,18 @@ FONT  = "Caladea"
 
 config.background_color = BG
 
+# T() lays text out at 8x (see below), and manim hands Pango a wrap width of
+# config.pixel_width, so lines wider than ~4.7 units wrapped at -ql and ~10.6 at -qh
+# (and the text cache ignores the width, so a wrapped -ql layout leaked into -qh).
+# Never wrap: line breaks are always explicit ("\n").
+import manimpango as _mp
+if not getattr(_mp.text2svg, "_nowrap", False):
+    _t2s = _mp.text2svg
+    def _t2s_nowrap(settings, size, ls, liga, fn, sx, sy, width, height, txt, pango_width=None):
+        return _t2s(settings, size, ls, liga, fn, sx, sy, 200000, height, txt, pango_width)
+    _t2s_nowrap._nowrap = True
+    _mp.text2svg = _t2s_nowrap
+
 KERN = 8
 def T(s, size=26, color=INK, **kw):
     """Always make text with T(), never Text(). Pango snaps glyph advances to whole pixels
