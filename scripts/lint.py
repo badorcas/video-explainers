@@ -270,10 +270,6 @@ def beat_sheet(mod, scene, tl, words, F):
     inked = lambda t: (lambda i: i >= 0 and (F[i] > np.median(F[:, :4, :4]) + 18).mean() >= 0.0015)(
         min(int((t - T0) * FPS), len(F) - 1))
     shots = []                                   # (caption start, caption end, sample time, tag)
-    for a in [T0] + posts:
-        b = min([p for p in pres if p >= a - 1e-6] + [T1])
-        if b - a >= 0.8 and inked(b - 0.15):
-            shots.append((a, b, b - 0.15, ""))
     for a in pres:
         b = min([p for p in posts if p >= a - 1e-6] + [T1])
         n = int((b - a) // 3.0)
@@ -281,6 +277,18 @@ def beat_sheet(mod, scene, tl, words, F):
             t = a + (b - a) * k / (n + 1)
             if inked(t):
                 shots.append((t - 1.5, t + 1.5, t, "moving "))
+    # settled frames: every hold of 0.8 s or more, plus a short hold whenever 2.5 s have passed
+    # since the last frame kept (a run of quick beats with brief pauses must not vanish from the sheet)
+    last = T0 - 99
+    for a in sorted(set([T0] + posts)):
+        b = min([p for p in pres if p >= a - 1e-6] + [T1])
+        if b - a < 0.05:
+            continue
+        last = max([last] + [s[2] for s in shots if s[3] and s[2] <= a])
+        ts = b - min(0.15, (b - a) / 2)
+        if (b - a >= 0.8 or a - last >= 2.5) and inked(ts):
+            shots.append((a, b, ts, ""))
+            last = ts
     shots.sort(key=lambda r: r[2])
     vid = glob.glob(f"media/videos/{mod}/480p15/{scene}.mp4")[0]
     try:
